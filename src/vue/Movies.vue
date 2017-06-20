@@ -1,109 +1,203 @@
 <template lang="html">
   <div id="movies" class="movies flexbox">
     <ul class="flexbox cell wrap">
-      <li class="cell movie pointer" :class="{loaded: movie.poster_path}"  v-for="movie in filteredMovies">
-        <div class="flexbox column">
-          <img v-if="movie.poster_path" :src="tmdb.GetImageUrl(movie.poster_path)" alt="Poster" class="poster cell">
-
-          <div class="details pointer flexbox column">
-            <span class="cell title pointer" :title="movie.title">{{movie.title}}</span>
-            <span class="cell release_date pointer"><i class="zmdi zmdi-calendar"></i> {{tmdb.BeautifyDate(movie.release_date)}}</span>
-            <span class="cell runtime pointer"><i class="zmdi zmdi-time"></i> {{movie.runtime}} Minuten</span>
-            <span class="cell vote_average pointer"><i class="zmdi zmdi-star-outline"></i> {{movie.vote_average}} ({{movie.vote_count}})</span>
-          </div>
-        </div>
-      </li>
+        <MovieCover v-for="movie in filteredMovies" v-bind:key="movie.id" class="cell"
+          v-bind:MovieTitle = "movie.title"
+          v-bind:MoviePosterUrl = "tmdb.GetImageUrl(movie.poster_path, 'w185')"
+          v-bind:MovieRuntime = "movie.runtime"
+          v-bind:MovieReleaseDate = "tmdb.BeautifyDate(movie.release_date)"
+          v-bind:MovieVoteAverage = "movie.vote_average"
+          v-bind:MovieVoteCount= "movie.vote_count"
+          v-bind:MovieId="movie.id"
+        ></MovieCover>
     </ul>
   </div>
 </template>
 
 <script>
   import Vue from "vue";
-  import Tmdb from "../js/tmdb.js"
+  import Tmdb from "../js/tmdb.js";
+  import MovieCover from "./MovieCover.vue";
 
   export default {
   data() {
     return {
-      tmdb: {}
+      tmdb: new Tmdb(),
+      loadedAllMovies: false,
+      movieLoaderInterval: 0
     }
   },
-  props: ["User", "movieIds" , "searchText", "sort"],
+  components: {
+    MovieCover
+  },
+  props: ["User", "searchText", "sort"],
   mounted() {
 
+    this.$emit("deletePath", 1);
+    this.$emit("changePath", 0 , "Filme", "Movies");
 
-    this.$on("searchFor", () => {
-      console.log("searchFor");
-    })
-    //..Get movieIds
-    let movieIds = JSON.parse(JSON.stringify(this.movieIds));
-
-    this.tmdb = new Tmdb();
-
-    for (var i = 0; i < movieIds.length; i++) {
-      let movieId = movieIds[i];
-      this.tmdb.Movies.push({id: movieId});
+    if(this.getRemainingMovieIds().length == 0)
+    {
+      this.loadedAllMovies = true;
     }
-    this.$emit("pushDialog", {message: 'Filme laden', status: "running"});
-    let movieLoaderInterval = setInterval(() => {
-      if(movieIds.length == 0)
-      {
-        this.$emit("changeDialog", {message: 'Filme laden', status: "running"}, {message: 'Filme geladen', status: "success"});
-        clearInterval(movieLoaderInterval);
-      }
-
-      let moviePromises = [];
-      let movieId = movieIds[0];
-      if(movieId)
-      {
-        this.tmdb.GetMovieByIdPromise(movieId).
-        then((request) => {
-          let movie = request.data;
-
-          let indOfMvObj = this.tmdb.Movies.findIndex(item => item.id === movieId);
-          this.tmdb.Movies[indOfMvObj] = movie;
-          movieIds.splice( movieIds.indexOf(movieId) , 1);
-          this.tmdb.Movies.__ob__.dep.notify();
-        })
-        .catch( (error) => {
-          if (error.response)
-          {
-             // The request was made and the server responded with a status code
-             // that falls out of the range of 2xx
-             console.log(error.response.data);
-             console.log(error.response.status);
-             console.log(error.response.headers);
-           }
-           else if (error.request)
-           {
-             // The request was made but no response was received
-             // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-             // http.ClientRequest in node.js
-             console.log(error.request);
-           }
-           else
-           {
-             // Something happened in setting up the request that triggered an Error
-             console.log('Error', error.message);
-           }
-         });
-      }
-    }, 333);
+    else
+    {
+      this.loadedAllMovies = false;
+      this.startLoadingMovies();
+    }
 
 
 
 
   },
+  destroyed() {
+    if(!this.loadedAllMovies)
+    {
+      clearInterval(this.movieLoaderInterval);
 
+      this.$emit("changeDialog",  {message: 'Filme laden',                status: "running"},
+                                  {message: 'Filme laden abgebrochen',  status: "error"});
+
+    }
+    this.loadedAllMovies = false;
+    console.warn("Movies got destroyed");
+  },
   methods: {
+    arr_diff(a1, a2)
+    {
 
+        var a = [], diff = [];
+
+        for (var i = 0; i < a1.length; i++) {
+            a[a1[i]] = true;
+        }
+
+        for (var i = 0; i < a2.length; i++) {
+            if (a[a2[i]]) {
+                delete a[a2[i]];
+            } else {
+                a[a2[i]] = true;
+            }
+        }
+
+        for (var k in a) {
+            diff.push(k);
+        }
+
+        return diff;
+    },
+
+    startLoadingMovies()
+    {
+      let movieIds = this.getRemainingMovieIds();
+      this.fillUserMoviesWithPlaceholders(movieIds);
+
+      this.$emit("pushDialog", {message: 'Filme laden...', status: "running"});
+
+      this.movieLoaderInterval = setInterval(this.moviesLoader, 333);
+    },
+
+    fillUserMoviesWithPlaceholders(movieIds)
+    {
+      for (var i = 0; i < movieIds.length; i++)
+      {
+        let movieId = +movieIds[i];
+        let indOfMvObj = this.User.Movies.findIndex(item => item.id === movieId);
+        if(indOfMvObj == -1)
+        {
+          this.User.Movies.push({id: movieId});
+        }
+      }
+    },
+
+    getRemainingMovieIds()
+    {
+      let movieIdsCopy = JSON.parse(JSON.stringify(this.User.movieIds));
+      let movieIdsFromMovies = this.User.Movies.filter((movie) => {
+        if(movie.title)
+        {
+          return true;
+        }
+        else
+        {
+          return false;
+        }
+      });
+
+      movieIdsFromMovies = movieIdsFromMovies.map((movie) => {
+        return +movie.id;
+      })
+
+      let movieIds = this.arr_diff(movieIdsCopy, movieIdsFromMovies);
+      movieIds = movieIds.map((id) => {
+        return +id;
+      })
+
+      return movieIds;
+    },
+
+    moviesLoader()
+    {
+      let movieIds = this.getRemainingMovieIds();
+
+      if(movieIds.length > 0)
+      {
+        let movieId = movieIds[0];
+        if(movieId)
+        {
+          this.setMovieById(movieId);
+        }
+      }
+      else
+      {
+        this.loadedAllMovies = true;
+        this.$emit("changeDialog",  {message: 'Filme laden',    status: "running"},
+                                    {message: 'Filme geladen',  status: "success"});
+
+        clearInterval(this.movieLoaderInterval);
+      }
+    },
+
+    setMovieById(movieId) {
+      this.tmdb.GetMovieByIdPromise(movieId).
+      then((request) => {
+        let movie = request.data;
+
+        let indOfMvObj = this.User.Movies.findIndex(item => item.id === movieId);
+        this.User.Movies[indOfMvObj] = movie;
+        this.User.Movies.__ob__.dep.notify();
+      })
+      .catch( (error) => {
+        if (error.response)
+        {
+           // The request was made and the server responded with a status code
+           // that falls out of the range of 2xx
+           console.log(error.response.data);
+           console.log(error.response.status);
+           console.log(error.response.headers);
+         }
+         else if (error.request)
+         {
+           // The request was made but no response was received
+           // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+           // http.ClientRequest in node.js
+           console.log(error.request);
+         }
+         else
+         {
+           // Something happened in setting up the request that triggered an Error
+           console.log('Error', error.message);
+         }
+       });
+    }
   },
   computed: {
     searchedMovies() {
       let filtMovies = [];
-      if(this.tmdb.Movies)
+      if(this.User.Movies)
       {
-        filtMovies = this.tmdb.Movies;
-        filtMovies = this.tmdb.Movies.filter((movie, index) => {
+        filtMovies = this.User.Movies;
+        filtMovies = this.User.Movies.filter((movie, index) => {
           if(this.searchText && movie.title)
           {
             let textToSearchArr = this.searchText.toLowerCase().split(/[ ]+/);
@@ -138,9 +232,9 @@
       return filtMovies;
     },
     filteredMovies() {
-      if(this.tmdb.Movies)
+      if(this.User.Movies)
       {
-        var movies = this.tmdb.Movies;
+        var movies = this.User.Movies;
         // console.log(this.searchText, this.searchText.length);
         if(this.searchText && this.searchText.length > 0)
         {
@@ -215,82 +309,9 @@
   @import "../scss/flat-colors";
 
   #movies {
-    margin: 20px;
+    // margin: 20px;
     max-height: 100%;
-    overflow: scroll;
-    overflow-x: hidden;
+    overflow: auto;
     width: 100%;
-
-    & > ul {
-      // justify-content: center;
-      width: 100%;
-      align-items: baseline;
-      //justify-content: space-between;
-    }
   }
-
-  .movie {
-    width: 200px;
-    max-height: 300px;
-    margin: 20px 20px 20px 0;
-    position: relative;
-
-    &:not(.loaded) {
-      border: 1px solid $flat-orange-2;
-      min-height: 278px;
-    }
-
-    &.loaded {
-      background: transparent;
-    }
-
-    & .details {
-      position: absolute;
-      text-align: left;
-      // background: rgba(0, 0 , 0 , 0.85);
-      background: rgba(230, 126, 34, 0.95);
-      font-size: 12px;
-      color: white;
-      width: 100%;
-      opacity: 0;
-      bottom: 0;
-      height: 0px;
-      padding: 0;
-      overflow: hidden;
-      transition: all 0.4s ease-in-out;
-      font-family: 'Open Sans', sans-serif;
-
-      // text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-      // z-index: -1;
-
-      & .title {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 14px;
-        font-weight: bold;
-        // border-bottom: 1px solid #121212;
-        margin-bottom: auto;
-      }
-
-      & i.zmdi {
-        padding-right: 2px;
-        color: #121212;
-      }
-    }
-
-    &:hover {
-      & .details {
-        opacity: 1;
-        bottom: 0px;
-        height: 100px;
-        padding: 10px;
-        z-index: 9;
-        //border-bottom: 5px solid $flat-orange-2;
-
-
-      }
-    }
-  }
-
 </style>

@@ -9,8 +9,13 @@ export default {
     }
   },
   mounted() {
-    
+    this.$emit("deletePath", 1);
+    this.$emit("changePath", 0 , "Startseite", "Home");
+  },
+  destroyed() {
+    console.warn("Home got destroyed");
   }
+
 }
 </script>
 

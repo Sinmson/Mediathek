@@ -27,29 +27,29 @@
         <li class="category cell flexbox column">
           <span class="noselect cell">Meine Mediathek</span>
           <ul class="cell felxbox column">
-            <li class="cell flexbox ">
+            <li class="cell flexbox " :class="{isActive : $route.name=='Movies'}">
               <i class="cell pointer zmdi zmdi-movie"></i>
-              <router-link class="cell pointer noselect" to="/Movies">Filme</router-link>
+              <router-link class="cell pointer noselect"  :to="{ name: 'Movies'}">Filme</router-link>
               <!-- <span class="cell pointer noselect">Filme</span> -->
             </li>
-            <li class="cell flexbox ">
+            <li class="cell flexbox " :class="{isActive : $route.name=='TvSeries'}">
               <i class="cell pointer zmdi zmdi-videocam"></i>
-              <router-link class="cell pointer noselect" to="/TvSeries">Tv Serien</router-link>
+              <router-link class="cell pointer noselect"  :to="{ name: 'TvSeries'}">Tv Serien</router-link>
             </li>
-            <li class="cell flexbox ">
+            <li class="cell flexbox " :class="{isActive : $route.name=='Music'}">
               <i class="cell pointer zmdi zmdi-play-circle"></i>
-              <router-link class="cell pointer noselect" to="/Music">Musik</router-link>
+              <router-link class="cell pointer noselect" :to="{ name: 'Music'}">Musik</router-link>
             </li>
           </ul>
         </li>
-
+<!--
         <li class="category cell flexbox column">
           <span class="noselect cell">Beliebt</span>
           <ul class="cell felxbox column">
             <li class="cell flexbox ">
               <i class="cell pointer zmdi zmdi-movie"></i>
               <router-link class="cell pointer noselect" to="/Movies" @click="$emit('showPopularMovies')">Filme</router-link>
-              <!-- <span class="cell pointer noselect">Filme</span> -->
+              <!-- <span class="cell pointer noselect">Filme</span>
             </li>
             <li class="cell flexbox ">
               <i class="cell pointer zmdi zmdi-videocam"></i>
@@ -60,7 +60,7 @@
               <router-link class="cell pointer noselect" to="/Music">Musik</router-link>
             </li>
           </ul>
-        </li>
+        </li> -->
 
         <li class="cell flexbox">
           <i class="cell pointer zmdi zmdi-settings"></i>
@@ -136,7 +136,9 @@ export default {
     height: 100%;
     max-height: 100%;
     width: 200px;
-    padding-right: 10px;
+    min-width: 200px;
+    max-width: 200px;
+    //padding-right: 10px;
     -webkit-box-shadow: 2px 0px 5px -1px #222;
     -moz-box-shadow: 2px 0px 5px -1px #222;
     box-shadow: 2px 0px 5px -1px #222;
@@ -156,6 +158,10 @@ export default {
         & li {
           padding: 2px 20px;
           width: 100%;
+
+          &.isActive {
+            color: $flat-gray-2;
+          }
         }
 
         & li:not(.category) {

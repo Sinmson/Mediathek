@@ -7,16 +7,25 @@
           </router-link>
 
 
-          <div class="path cell flexbox" v-for="path in paths">
+          <div class="path cell flexbox" v-for="path in paths" v-bind:key="path.title">
             <i class="cell zmdi zmdi-chevron-right zmdi-hc-lg"></i>
-            <span class="cell noselect pointer">{{path}}</span>
+            <router-link tag="span" class="cell noselect pointer" :to="{ name: path.name }">{{path.title}}</router-link>
           </div>
 
 
-          <div id="sort" class="flexbox cell">
-            <i title="Sortieren nach Titel" class="zmdi zmdi-sort-asc pointer"       :class="{active: sort.by == 'title'}"         @click="sort.by = 'title'"></i>
-            <i title="Sortieren nach Erscheinungsdatum" class="zmdi zmdi-calendar-note pointer"  :class="{active: sort.by == 'release_date'}"  @click="sort.by = 'release_date'"></i>
-            <i title="Sortieren nach Bewertung" class="zmdi zmdi-star-circle pointer"    :class="{active: sort.by == 'vote_average'}"  @click="sort.by = 'vote_average'"></i>
+          <div :class="{show: $route.name=='Movies' || $route.name=='TvSeries'}" id="sort" class="flexbox cell">
+            <i title="Sortieren nach Titel"
+            class="zmdi zmdi-sort-asc pointer"
+            :class="{active: sort.by == 'title'}"
+            @click="sort.by = 'title'"></i>
+
+            <i title="Sortieren nach Erscheinungsdatum" class="zmdi zmdi-calendar-note pointer"
+            :class="{active: sort.by == 'release_date'}"
+            @click="sort.by = 'release_date'"></i>
+
+            <i title="Sortieren nach Bewertung" class="zmdi zmdi-star-circle pointer"
+            :class="{active: sort.by == 'vote_average'}"
+            @click="sort.by = 'vote_average'"></i>
 
           </div>
 
@@ -32,16 +41,16 @@
       <main class="flexbox cell">
         <sidemenu v-bind:username="User.username"></sidemenu>
         <router-view
-        @showPopularMovies="showPopularMovies" @pushDialog="pushDialog" @changeDialog="changeDialog" @deleteDialog="deleteDialog"
-        v-bind:User="User" v-bind:sort="sort" v-bind:searchText="searchText" v-bind:movieIds="movieIds">
+        @showPopularMovies="showPopularMovies" @pushDialog="pushDialog" @changeDialog="changeDialog" @deleteDialog="deleteDialog"  @changePath="changePath" @deletePath="deletePath"
+        v-bind:User="User" v-bind:sort="sort" v-bind:searchText="searchText" v-bind:paths="paths">
         </router-view>
         <div id="dialogs" :class="{show : dialogs.length > 0}" :style="{height:  (dialogs.length * 28) + 20 + 'px'}" >
           <ul>
             <li class="dialog" :class="dialog.status"  v-for="dialog in dialogs">
               <i v-if="dialog.status=='running'"      class="zmdi zmdi-spinner zmdi-hc-lg"></i>
-              <i v-else-if="dialog.status=='success'" class="zmdi pointer zmdi-check  zmdi-hc-lg" @click="deleteDialog(dialog)"></i>
+              <i v-else-if="dialog.status=='success'" class="zmdi pointer zmdi-check  zmdi-hc-lg"       @click="deleteDialog(dialog)"></i>
               <i v-else-if="dialog.status=='error'"   class="zmdi pointer zmdi-alert-circle zmdi-hc-lg" @click="deleteDialog(dialog)"></i>
-              <span>{{dialog.message}}</span>
+              <span :title="dialog.message">{{dialog.message}}</span>
             </li>
           </ul>
         </div>
@@ -60,42 +69,53 @@ export default {
   data () {
     return {
       User: {
-        username : "Sinmson"
+        username : "Sinmson",
+        Movies: [],
+        TvSeries: [],
+        movieIds: [300671,346646,150540,9799,9615,168259,584,13804,51497,82992,102899,261023,325125,346830,198184,356841,312221,201085,278927,255157,277546,267193,299687,262504,262500,353257,181009,291805,370964,228933,22803,205584,382651,49021,258489,267860,328111,257344,241257,254128,273481,1893,1894,1895,11,1891,1892,269149,321741,335462,190847,146578,287948,285783,310567,203801,296099,302666,136797],
+        tvSeriesIds: [1399,1420, 61889, 62126, 40293, 63174, 37854, 46298, 46260, 31911, 36406, 31724, 46261, 45782, 42942, 61374, 46671, 61421, 70051, 38464, 37858, 65844, 65942, 65930, 61415, 60808, 46184, 57577, 69346, 45125, 62171, 60833, 63145, 61333, 60846, 45997, 42413, 62255, 63663, 61223, 1429]
       },
       dialogs: [
         /*{message: "Filme laden...", status: "running"},
         {message: "Filme geladen", status: "success"},
         {message: "Fehler beim Filme laden", status: "error"}*/
       ],
-      paths: ["Filme"],
+      paths: [],
       showSearch: false,
       searchText: "",
       sort: { by: "title", reverse: false },
-      movieIds: [300671,346646,150540,9799,9615,168259,584,13804,51497,82992,102899,261023,325125,346830,198184,356841,312221,201085,278927,255157,277546,267193,299687,262504,262500,353257,181009,291805,370964,228933,22803,205584,382651,49021,258489,267860,328111,257344,241257,254128,273481,1893,1894,1895,11,1891,1892,269149,321741,335462,190847,146578,287948,285783,310567,203801,296099,302666,136797]
     }
   },
+  computed: {
+  },
   mounted: function() {
-    console.log("MOUNT THAT SHIT");
-    console.log("MOUNTED THAT SHIT");
+
   },
   components: {
     Sidemenu
   },
   methods: {
+    changePath(index, title, name) {
+      this.$set(this.paths, index, {title, name});
+    },
+    deletePath(index) {
+      console.log(this.paths);
+      this.paths.splice(index, 1);
+      console.log(this.paths);
+    },
     deleteDialog(dialog) {
-      console.log("DELETE DIALOG");
+      console.log("DELETE DIALOG", dialog);
       this.dialogs.splice(this.dialogs.indexOf(dialog), 1);
     },
     pushDialog(dialog) {
-      console.log("PUSH DIALOG");
+      console.log("PUSH DIALOG", dialog);
       this.dialogs.push(dialog);
     },
     changeDialog(oldDialog, newDialog) {
       let index = this.dialogs.findIndex((dialog) => {
-        console.log(dialog, oldDialog);
+        console.log("CHANGE DIALOG FROM TO", oldDialog, newDialog);
         return dialog.message === oldDialog.message
       });
-      console.log("CHANGE DIALOG", oldDialog, newDialog, index);
       this.$set(this.dialogs, index, newDialog);
     },
     showPopularMovies(data) {
@@ -122,6 +142,8 @@ export default {
 
 
 
+
+
   #dialogs {
     position: absolute;
     bottom: -5px;
@@ -130,7 +152,7 @@ export default {
     margin: 0 auto;
     min-height: 45px;
     height: auto;
-    width: 225px;
+    width: 275px;
     background: $flat-gray-1;
     border-radius: 7px;
     transition: min-height 0.3s ease-in-out, height 0.3s ease-in-out, max-height 0.3s ease-in-out;
@@ -146,7 +168,7 @@ export default {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: 250px;
       cursor: default;
 
       &:first-of-type {
@@ -210,10 +232,13 @@ export default {
       margin-left: auto;
       margin-right: 100px;
 
+      &:not(.show) i {
+        display: none;
+      }
+
       & i.active {
         color: orange;
       }
-
 
     }
 
