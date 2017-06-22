@@ -134,6 +134,7 @@ export default {
     // border-right: 1px solid #fff;
     background-color: #1A1A1A;
     height: 100%;
+    min-height: 100%;
     max-height: 100%;
     width: 200px;
     min-width: 200px;
@@ -142,8 +143,17 @@ export default {
     -webkit-box-shadow: 2px 0px 5px -1px #222;
     -moz-box-shadow: 2px 0px 5px -1px #222;
     box-shadow: 2px 0px 5px -1px #222;
-    position: relative;
+    position:fixed;
+    overflow: hidden;
     z-index: 99;
+
+    @media screen and (max-width: 766px)
+    {
+      width: 0;
+      min-width: 0;
+      max-width: 0;
+      overflow: hidden;
+    }
 
     & > .sidemenu {
       padding: 15px 0;

@@ -279,10 +279,4 @@
 </script>
 
 <style lang="scss" scroped>
-  #TvSeries {
-    max-height: 100%;
-    overflow: auto;
-    justify-content: flex-start;
-    align-items: flex-end;
-  }
 </style>

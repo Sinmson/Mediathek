@@ -1,17 +1,15 @@
 <template lang="html">
-  <div id="movies" class="movies flexbox">
-    <ul class="flexbox cell wrap">
-        <MovieCover v-for="movie in filteredMovies" v-bind:key="movie.id" class="cell"
-          v-bind:MovieTitle = "movie.title"
-          v-bind:MoviePosterUrl = "tmdb.GetImageUrl(movie.poster_path, 'w185')"
-          v-bind:MovieRuntime = "movie.runtime"
-          v-bind:MovieReleaseDate = "tmdb.BeautifyDate(movie.release_date)"
-          v-bind:MovieVoteAverage = "movie.vote_average"
-          v-bind:MovieVoteCount= "movie.vote_count"
-          v-bind:MovieId="movie.id"
-        ></MovieCover>
-    </ul>
-  </div>
+  <ul id="Movies" class="flexbox wrap">
+      <MovieCover v-for="movie in filteredMovies" v-bind:key="movie.id" class="cell"
+        v-bind:MovieTitle = "movie.title"
+        v-bind:MoviePosterUrl = "tmdb.GetImageUrl(movie.poster_path, 'w185')"
+        v-bind:MovieRuntime = "movie.runtime"
+        v-bind:MovieReleaseDate = "tmdb.BeautifyDate(movie.release_date)"
+        v-bind:MovieVoteAverage = "movie.vote_average"
+        v-bind:MovieVoteCount= "movie.vote_count"
+        v-bind:MovieId="movie.id"
+      ></MovieCover>
+  </ul>
 </template>
 
 <script>
@@ -306,12 +304,4 @@
 </script>
 
 <style lang="scss">
-  @import "../scss/flat-colors";
-
-  #movies {
-    // margin: 20px;
-    max-height: 100%;
-    overflow: auto;
-    width: 100%;
-  }
 </style>

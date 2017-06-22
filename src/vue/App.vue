@@ -40,9 +40,11 @@
 
       <main class="flexbox cell">
         <sidemenu v-bind:username="User.username"></sidemenu>
-        <router-view
+        <div id="sidemenuPlaceholder"></div>
+        <router-view class="router-view"
         @showPopularMovies="showPopularMovies" @pushDialog="pushDialog" @changeDialog="changeDialog" @deleteDialog="deleteDialog"  @changePath="changePath" @deletePath="deletePath"
         v-bind:User="User" v-bind:sort="sort" v-bind:searchText="searchText" v-bind:paths="paths">
+
         </router-view>
         <div id="dialogs" :class="{show : dialogs.length > 0}" :style="{height:  (dialogs.length * 28) + 20 + 'px'}" >
           <ul>
@@ -142,12 +144,14 @@ export default {
 
 
 
-
+  .router-view {
+    position: relative;
+  }
 
   #dialogs {
     position: absolute;
     bottom: -5px;
-    left: 0;
+    left: 200px;
     right: 0;
     margin: 0 auto;
     min-height: 45px;
@@ -157,6 +161,12 @@ export default {
     border-radius: 7px;
     transition: min-height 0.3s ease-in-out, height 0.3s ease-in-out, max-height 0.3s ease-in-out;
     z-index: 99;
+
+
+    @media screen and (max-width: 420px)
+    {
+      left: 0;
+    }
 
     &:not(.show) {
       min-height: 0px;
@@ -268,6 +278,20 @@ export default {
           padding: 0;
         }
       }
+    }
+  }
+
+  #sidemenuPlaceholder {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+
+    @media screen and (max-width: 766px)
+    {
+       width:     0px;
+       min-width: 0px;
+       max-width: 0px;
+
     }
   }
 
